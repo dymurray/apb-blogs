@@ -317,3 +317,23 @@ apb push --openshift
 ```
 
 You can now successfully bind PostgreSQL to Mediawiki in the web console.
+
+# Troubleshooting
+
+## APB not displaying in the web console
+If you do not see your APB in the OpenShift web console after `apb push --openshift`, a good way to debug is to type:
+```
+apb list
+```
+
+Look at the output and check if your APB is listed. If it is, that means the OpenShift Ansible Broker knows about your APB and it is part of it's list of bootstrapped APB specs. If it does not show up then try running:
+```
+apb bootstrap
+```
+
+If the bootstrap is successful, and you now see your APB but you do not see it inthe web console then try typing:
+```
+apb relist
+```
+
+This will trigger the service catalog to get full list of bootstrapped APB specs.
