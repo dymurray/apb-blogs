@@ -1,7 +1,11 @@
-This tutorial will give a user a walkthrough on developing an APB for both Mediawiki and PostgreSQL and make them capable of binding to each other so that Mediawiki is backed by a database. In order to do this we must first make some assumptions. We are assuming that Mediawiki and PostgreSQL are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on Dockerhub at https://hub.docker.com/r/ansibleplaybookbundle/mediawiki123/ and at https://registry.access.redhat.com/rhscl/postgresql-95-rhel7.
+This tutorial will give a user a walkthrough on developing an APB for both Mediawiki and PostgreSQL and make them capable of binding to each other so that Mediawiki is backed by a database. In order to do this we must first make some assumptions. We are assuming that Mediawiki and PostgreSQL are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on Dockerhub ([mediawiki123](https://hub.docker.com/r/ansibleplaybookbundle/mediawiki123/)) and the Red Hat Container Catalog ([PostgreSQL 9.5](https://registry.access.redhat.com/rhscl/postgresql-95-rhel7)).
 
 # Creating Mediawiki APB
-To get started we will need to install the APB tooling. https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/ Once installed, we will run `apb init mediawiki-apb`.
+To get started we will need to install the APB tooling. Please go [here](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/apb_cli.md#installing-the-apb-tool) to learn how to install the tool. Once installed, we will run 
+
+```
+apb init mediawiki-apb
+```
 
 At this point you will see the following file structure:
 ```
@@ -192,7 +196,7 @@ By default we recommend that an APB author provides a basic deprovisioning role.
 This will properly delete all created resources in the APBs namespace.
 
 ## Building and Testing
-Now that our APB is ready to be tested, we can build and push the image so that it can be deployed by the OpenShift Ansible Broker. For this tutorial I am assuming your Ansible Broker is configured to source APBs from the internal OpenShift Registry. Please see [here]() to configure the broker with the `local_openshift` registry adapter.
+Now that our APB is ready to be tested, we can build and push the image so that it can be deployed by the OpenShift Ansible Broker. For this tutorial I am assuming your Ansible Broker is configured to source APBs from the internal OpenShift Registry. Please see [here](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) to configure the broker with the `local_openshift` registry adapter.
 
 To push your image onto the OpenShift registry, type:
 ```
