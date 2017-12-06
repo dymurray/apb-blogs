@@ -1,4 +1,6 @@
-This tutorial will give a user a walkthrough on developing an APB for RocketChat. In order to do this we must first make some assumptions. We are assuming that RocketChat and MongoDB are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on Dockerhub([RocketChat](https://hub.docker.com/_/rocket.chat) and [MongoDB](https://hub.docker.com/_/mongo)).
+This tutorial will give a user a walkthrough on developing an APB for RocketChat. In order to do this we must first make some assumptions. We are assuming that RocketChat and MongoDB are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on RHCC([RocketChat](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat) and [MongoDB](https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhscl/mongodb-32-rhel7)).
+
+If you are only interested in deploying the published [RocketChat APB](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb) you can skip to the bottom of this tutorial.
 
 # Creating RocketChat APB
 To get started we will need to install the APB tooling. Please see the [installation guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/apb_cli.md#installing-the-apb-tool) to install the APB tooling. Once installed, we will run:
@@ -276,3 +278,19 @@ apb relist
 
 This will trigger the service catalog to get full list of bootstrapped APB specs.
 
+# Configuring OpenShift Ansible Broker to deploy RocketChat APB from RHCC
+In order to use images published by ISVs (in this instance [rocketchat-apb](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb)), we need to append the OpenShift Ansible Broker's registry configuration with the `openshift` registry adapter pointing to `registry.connect.redhat.com`. To do this, please make sure that your Ansible OpenShift Broker's configuration looks like the following:
+```yaml
+registry:
+  - name: isv-registry
+    type: openshift
+    user: <RH_user>
+    pass: <RH_pass>
+    url: http://registry.connect.redhat.com
+    images:
+      - rocketchat/rocketchat-apb
+    white_list:
+      - ".*-apb$"
+```
+
+`<RH_user>` and `<RH_pass>` should be replaced with your credentials to authenticate against RHCC.
