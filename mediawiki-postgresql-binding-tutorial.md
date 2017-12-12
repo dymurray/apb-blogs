@@ -1,6 +1,6 @@
 # Introduction
 
-This tutorial will give a user a walk-through on developing an APB for both MediaWiki and PostgreSQL and make them capable of binding to each other so that MediaWiki is backed by a database. In order to do this we must first make some assumptions. We are assuming that MediaWiki and PostgreSQL are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on Dockerhub ([mediawiki123](https://hub.docker.com/r/ansibleplaybookbundle/mediawiki123/)) and the Red Hat Container Catalog ([PostgreSQL 9.5](https://registry.access.redhat.com/rhscl/postgresql-95-rhel7)).
+This tutorial will give a user a walk-through on developing an APB for both MediaWiki and PostgreSQL and make them capable of binding to each other so that MediaWiki is backed by a database. In order to do this we must first make some assumptions. We are assuming that MediaWiki and PostgreSQL are already containerized applications which can run under the `restricted` security context constraint (scc) in OpenShift. These images exist on Dockerhub ([mediawiki123](https://hub.docker.com/r/ansibleplaybookbundle/mediawiki123/)) and the Red Hat Container Catalog ([PostgreSQL 9.5](https://registry.access.redhat.com/rhscl/postgresql-95-rhel7)).
 
 # Creating MediaWiki APB
 To get started we will need to install the APB tooling. Please go [here](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/apb_cli.md#installing-the-apb-tool) to learn how to install the tool. Once installed, we will run 
