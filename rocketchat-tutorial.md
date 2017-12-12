@@ -1,6 +1,6 @@
 # Introduction
 
-This tutorial will give a user a walkthrough on developing an APB for RocketChat. In order to do this we must first make some assumptions. We are assuming that RocketChat and MongoDB are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on RHCC([RocketChat](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat) and [MongoDB](https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhscl/mongodb-32-rhel7)).
+This tutorial will give a user a walk-through on developing an APB for RocketChat. In order to do this we must first make some assumptions. We are assuming that RocketChat and MongoDB are already containerized applications which can run under the `restricted` scc in OpenShift. These images exist on RHCC([RocketChat](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat) and [MongoDB](https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhscl/mongodb-32-rhel7)).
 
 If you are only interested in deploying the published [RocketChat APB](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb) you can skip to the bottom of this tutorial.
 
@@ -281,7 +281,7 @@ Look at the output and check if your APB is listed. If it is, that means the Ope
 apb bootstrap
 ```
 
-If the bootstrap is successful, and you now see your APB but you do not see it inthe web console then try typing:
+If the bootstrap is successful, and you now see your APB but you do not see it in the web console then try typing:
 ```
 apb relist
 ```
