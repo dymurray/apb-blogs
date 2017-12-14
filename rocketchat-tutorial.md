@@ -31,6 +31,15 @@ rocketchat-apb/
             └── main.yml
 ```
 
+| file/directory                     | description                                                   |
+|------------------------------------|---------------------------------------------------------------|
+| `apb.yml`                          | The APB spec declaration                                      |
+| `Dockerfile`                       | The APBs Dockerfile                                           |
+| `playbooks/provision.yml`          | An Ansible Playbook defining the APBs `provision` action      |
+| `playbooks/deprovision.yml`        | An Ansible Playbook defining the APBs `deprovision` action    |
+| `roles/provision-rocketchat-apb`   | An Ansible Role defining which tasks are run on `provision`   |
+| `roles/deprovision-rocketchat-apb` | An Ansible Role defining which tasks are run on `deprovision` |
+
 ## APB Spec
 Looking at apb.yml, we can go ahead and edit the default plan that was created by the APB tooling to match below.
 ```yaml
