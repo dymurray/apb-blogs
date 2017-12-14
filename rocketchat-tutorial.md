@@ -1,11 +1,15 @@
 # Introduction
 
-This tutorial will give a user a walk-through on developing an APB for RocketChat. In order to do this we must first make some assumptions. We are assuming that RocketChat and MongoDB are already containerized applications which can run under the `restricted` security context constraint (scc) in OpenShift. These images exist on RHCC([RocketChat](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat) and [MongoDB](https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhscl/mongodb-32-rhel7)).
+In the "Up and running with the OpenShift Ansible Broker" blog (by Jesus Rodriguez), we saw how you can leverage the OpenShift Ansible Broker to easily provision services on OpenShift Container Platform. In this blog, we're going to explore developing an Ansible Playbook Bundle (APB) to manage services.
 
-If you are only interested in deploying the published [RocketChat APB](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb) you can skip to the bottom of this tutorial.
+APBs leverage the power of Ansible to allow you to define your application in the same language you would define your infrastructure. Most commonly, APBs are used to orchestrate pre-certified containers while also using Ansible to provision on and off-platform services while also allowing you to package your application management logic in a container image. With APBs you can define how to install, and uninstall, your application with the flexibility provided by Ansible.
+
+This tutorial will give a user a walk-through on developing an APB to deploy the Rocket.Chat service. To simplify this process and focus on just the APB development, we're going to assume that Rocket.Chat and MongoDB are already containerized and can run under the `restricted` Security Context Constraint (SCC) in OpenShift. These container images can be found on RHCC([RocketChat](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat) and [MongoDB](https://access.redhat.com/containers/?tab=overview#/registry.access.redhat.com/rhscl/mongodb-32-rhel7)).
+
+If you're only interested in deploying the published [RocketChat APB](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb) you can skip to the end of this tutorial.
 
 # Creating RocketChat APB
-To get started we will need to install the APB tooling. Please see the [installation guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/apb_cli.md#installing-the-apb-tool) to install the APB tooling. Once installed, we will run:
+To start we will [install the APB tooling](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/apb_cli.md#installing-the-apb-tool). Then run:
 ```
 apb init rocketchat-apb
 ```
@@ -28,7 +32,7 @@ rocketchat-apb/
 ```
 
 ## APB Spec
-Looking at apb.yml, we are free to edit the default plan that is created by the tooling. Go ahead and edit the file to match below.
+Looking at apb.yml, we can go ahead and edit the default plan that was created by the APB tooling to match below.
 ```yaml
 version: 1.0
 name: rocketchat-apb
@@ -73,10 +77,12 @@ plans:
 ```
 * For information on configuring metadata for your application, see [here](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/developers.md#metadata)
 
-The important thing to note here are the `parameters`. Our rocketchat container image will expect these parameters as environment variables to be used and configured on startup. Now that we have defined our APBs parameters, we can reference them as environment variables to be injected into the container from the `deploymentConfig`. This will be made obvious in the next section.
+Note the `parameters` section, our Rocket.Chat container image will expect these parameters as environment variables to be used and configured on startup. Now that we have defined our APBs parameters, we can reference them as environment variables to be injected into the container from the `deploymentConfig`.
 
 ## Provisioning
-The first thing we want to do is to edit the provision role for the APB. Thankfully `apb init` makes this easy by leaving us commented blocks of code we can simply uncomment. We want to uncomment the three standard resources that should be created by an APB. A `service`, a `deploymentConfig`, and a `route`. The first thing we will edit is the `deploymentConfig`. Open up `roles/provision-rocketchat-apb/tasks/main.yml` and uncomment the `deploymentConfig` resource and add the needed information to attach a `persistentVolume` to the rocketchat deployment. Your `deploymentConfig` should look like the following:
+First, we need to edit the provision role for the APB. `apb init` makes this easy by leaving us commented blocks of code that we can work from.
+
+We want three standard resources to be created by our APB: a `service`, a `deploymentConfig`, and a `route`. Stary by opening up `roles/provision-rocketchat-apb/tasks/main.yml` and uncommenting the `deploymentConfig` resource so necessary information for attaching a `persistentVolume` to the Rocket.Chat deployment. Once you're finished editing, your `deploymentConfig` should look like this:
 
 ```yaml
 - name: create deployment config
@@ -128,7 +134,9 @@ The first thing we want to do is to edit the provision role for the APB. Thankfu
         claim_name: mongo-storage
 ```
 
-In the `deploymentConfig` you'll see that we have set the value of the environment variables that the app container expects to the parameter fields that we defined in `apb.yml`. We also added a `persistentVolumeClaim` resource to the deploymentConfig named `mongo-storage`. This means in the next section we need to be sure we create a `persistentVolumeClaim` along with our other resources. The only value we have not set yet is the `ROOT_URL` environment variable. To set this, we need to get the fully qualified route of where the application will exist on OpenShift. To get this, lets uncomment the `route` and `service` resources that were generated and move them before the `deploymentConfig` resource so that we can store the route and use it. This will also include creating a `service` resource.  Your provision role should now look like:
+In the `deploymentConfig`, you'll see the environment variables expected by Rocket.Chat have been set to the parameter fields defined in `apb.yml`. We also added a `persistentVolumeClaim` to the deploymentConfig named `mongo-storage`. This means we will need to create a `persistentVolumeClaim` resource as well.
+
+The only value we haven't set yet is the `ROOT_URL` environment variable. To set this, we need to get the fully qualified route of where the application will exist on OpenShift. Let's uncomment the `route` and `service` resources that were generated and move them before the `deploymentConfig` resource so we can store the route and use it. Your provision role should now look like this:
 
 ```yaml
 - name: create rocketchat route
@@ -140,6 +148,7 @@ In the `deploymentConfig` you'll see that we have set the value of the environme
       app: rocketchat
       service: rocketchat
     to_name: rocketchat
+  register: route
 
 - name: create persistent volume claim for mongo
   k8s_v1_persistent_volume_claim:
@@ -168,6 +177,7 @@ In the `deploymentConfig` you'll see that we have set the value of the environme
     containers:
     - env:
       - name: ROOT_URL
+        value: "{{ route.route.spec.host }}"
       - name: MONGO_URL
         value: "mongodb://0.0.0.0:27017/{{ mongodb_name }}"
       image: registry.connect.redhat.com/rocketchat/rocketchat
@@ -230,10 +240,10 @@ In the `deploymentConfig` you'll see that we have set the value of the environme
         target_port: 27017
 ```
 
-What's important to note here is that we used the `register` portion of the Ansible module when we created the route to store the output of the `route` creation. This output is then used as the value for the `ROOT_URL` environment variable as `{{ route.route.spec.host }}`. We also created two individual service declarations for Mongo and RocketChat for each container in the pod.
+Note that we used `register` when we created the route to store the output of the `route` creation. We then use this output as the value for the `ROOT_URL` environment variable as `{{ route.route.spec.host }}`. We also created two individual service declarations for Mongo and RocketChat for each container in the pod.
 
 ## Deprovisioning
-By default we recommend that an APB author provides a basic deprovisioning role. This way a user can delete the service from the WebUI and all of the APBs corresponding resources are properly deleted. `apb init` provides a skeleton deprovision role with commented resources just like the provision role. Uncomment the `service`, `route`, and `deploymentconfig` resources in the deprovision task like so:
+By default we recommend that an APB author provide a basic deprovision role. This allows a service consumer to delete the service from the OpenShift Service Catalog and the APBs corresponding resources to be properly deleted. `apb init` provides a skeleton deprovision role with commented resources just like the provision role. Uncomment the `service`, `route`, and `deploymentconfig` resources in the deprovision task like so:
 
 ```yaml
 - openshift_v1_route:
@@ -256,40 +266,40 @@ By default we recommend that an APB author provides a basic deprovisioning role.
     namespace: '{{ namespace }}'
     state: absent
 ```
-This will properly delete all created resources in the APBs namespace.
+This will remove all created resources in the APBs namespace.
 
 ## Building and Testing
-Now that our APB is ready to be tested, we can build and push the image so that it can be deployed by the OpenShift Ansible Broker. For this tutorial I am assuming your Ansible Broker is configured to source APBs from the internal OpenShift Registry. Please see [here](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) to configure the broker with the `local_openshift` registry adapter.
+Now that our APB is ready to be tested, we can build and push the image to be deployed by the OpenShift Ansible Broker. For this tutorial, I am assuming your Broker is configured to source APBs from the internal OpenShift registry (Please [refer to this guide](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) to configure the OpenShift Ansible Broker with the `local_openshift` registry adapter).
 
-To push your image onto the OpenShift registry, type:
+To push your image into the OpenShift registry, type:
 ```
 apb push --openshift
 ```
 
-This command will automatically tag & build your image and push it to the internal OpenShift registry. It will then bootstrap the broker and relist the service catalog. Refreshing the webUI will display your new APB in the console. You can now deploy your application by clicking on it and filling out the respective parameters to deploy rocketchat.
+This command will automatically tag & build your image, push it to the internal OpenShift registry, bootstrap the Broker, and relist the Service Catalog. Refreshing the Service Catalog will display your new APB in the console. You can now deploy your service by clicking on it and filling out the respective parameters to deploy Rocket.Chat.
 
 # Troubleshooting
 
-## APB not displaying in the web console
+## APB not displaying in the Service Catalog
 If you do not see your APB in the OpenShift web console after `apb push --openshift`, a good way to debug is to type:
 ```
 apb list
 ```
 
-Look at the output and check if your APB is listed. If it is, that means the OpenShift Ansible Broker knows about your APB and it is part of it's list of bootstrapped APB specs. If it does not show up then try running:
+Examine the output and check if your APB is listed. If it is, that means the OpenShift Ansible Broker knows about your APB and is part of it's list of bootstrapped APB specs. If it doesn't show up then try running:
 ```
 apb bootstrap
 ```
 
-If the bootstrap is successful, and you now see your APB but you do not see it in the web console then try typing:
+If the bootstrap is successful and you now see your APB but don't see it in the Service Catalog then try:
 ```
 apb relist
 ```
 
-This will trigger the service catalog to get the full list of bootstrapped APB specs.
+This will trigger the Service Catalog to get the full list of bootstrapped APB specs.
 
 # Configuring OpenShift Ansible Broker to deploy RocketChat APB from RHCC
-In order to use images published by ISVs (in this instance [rocketchat-apb](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb)), we need to append the OpenShift Ansible Broker's registry configuration with the `openshift` registry adapter pointing to `registry.connect.redhat.com`. To do this, please make sure that your Ansible OpenShift Broker's configuration looks like the following:
+In order to use images published by ISVs (in this instance [rocketchat-apb](https://access.redhat.com/containers/?tab=overview#/registry.connect.redhat.com/rocketchat/rocketchat-apb)), we need to append the OpenShift Ansible Broker's registry configuration with the `openshift` registry adapter pointing to `registry.connect.redhat.com`. To do this, please make sure that your OpenShift Ansible Broker's configuration has the following:
 ```yaml
 registry:
   - name: isv-registry
@@ -303,19 +313,19 @@ registry:
       - ".*-apb$"
 ```
 
-`<RH_user>` and `<RH_pass>` should be replaced with your credentials to authenticate against RHCC. The important thing to note is the `images` portion of the config. We have to manually list the images that we want to see from the ISV registry. In this instance we have added `rocketchat/rocketchat-apb`.
+`<RH_user>` and `<RH_pass>` should be replaced with your credentials to authenticate against RHCC. The important thing to note is the `images` portion of the config. We have to manually define the images that we want to see from the ISV registry. In this case, we're adding `rocketchat/rocketchat-apb`.
 
 If you already have an OpenShift cluster up, you can access the OpenShift Ansible Broker's configuration by typing (in the broker's namespace):
 ```
 oc edit configmap broker-config
 ```
 
-Saving your changes should deploy a newer pod for the broker. When the pod is ready, you can type:
+Saving your changes should deploy a newer pod for the Broker. Once the pod is ready, you can type:
 ```
 apb relist
 ```
 
-You should now be able to see and deploy the RocketChat APB from the web console.
+You should now be able to see and deploy the RocketChat APB from the OpenShift Service Catalog.
 
 # Conclusion
-I hope this helps you as the reader see how easy it is to take complex applications and deploy them using APBs. This tutorial showed you how to create a RocketChat APB from scratch using Red Hat signed images and also showed you how to configure the OpenShift Ansible Broker to deploy the Red Hat signed RocketChat APB from the Red Hat Container Catalog.
+I hope this helps developers see how easy it is to take complex applications and deploy them using APBs. This tutorial showed you how to create a RocketChat APB from scratch using Red Hat signed images and also showed you how to configure the OpenShift Ansible Broker to deploy the Red Hat signed RocketChat APB from the Red Hat Container Catalog.
