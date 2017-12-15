@@ -41,7 +41,7 @@ rocketchat-apb/
 | `roles/deprovision-rocketchat-apb` | An Ansible Role defining which tasks are run on `deprovision` |
 
 ## APB Spec
-Looking at apb.yml, we can go ahead and edit the default plan that was created by the APB tooling to match below.
+`apb.yml` is the declaration of the APB spec. In here, we will list all relevant application specific information including: OpenShift Service Catalog metadata, all of the APBs `plans`, and input parameters to prompt the user when provisioning. Looking at apb.yml, we are free to edit the default plan that is created by the tooling. Go ahead and edit the file to match below.
 ```yaml
 version: 1.0
 name: rocketchat-apb
@@ -91,7 +91,7 @@ Note the `parameters` section, our Rocket.Chat container image will expect these
 ## Provisioning
 First, we need to edit the provision role for the APB. `apb init` makes this easy by leaving us commented blocks of code that we can work from.
 
-We want three standard resources to be created by our APB: a `service`, a `deploymentConfig`, and a `route`. Stary by opening up `roles/provision-rocketchat-apb/tasks/main.yml` and uncommenting the `deploymentConfig` resource so necessary information for attaching a `persistentVolume` to the Rocket.Chat deployment. Once you're finished editing, your `deploymentConfig` should look like this:
+We want three standard resources to be created by our APB: a `service`, a `deploymentConfig`, and a `route`. Start by opening up `roles/provision-rocketchat-apb/tasks/main.yml` and uncommenting the `deploymentConfig` resource so necessary information for attaching a `persistentVolume` to the Rocket.Chat deployment. Once you're finished editing, your `deploymentConfig` should look like this:
 
 ```yaml
 - name: create deployment config
@@ -145,7 +145,7 @@ We want three standard resources to be created by our APB: a `service`, a `deplo
 
 In the `deploymentConfig`, you'll see the environment variables expected by Rocket.Chat have been set to the parameter fields defined in `apb.yml`. We also added a `persistentVolumeClaim` to the deploymentConfig named `mongo-storage`. This means we will need to create a `persistentVolumeClaim` resource as well.
 
-The only value we haven't set yet is the `ROOT_URL` environment variable. To set this, we need to get the fully qualified route of where the application will exist on OpenShift. Let's uncomment the `route` and `service` resources that were generated and move them before the `deploymentConfig` resource so we can store the route and use it. Your provision role should now look like this:
+The only value we haven't set yet is the `ROOT_URL` environment variable. To set this, we need to get the fully qualified route of where the application will exist on OpenShift. Let's uncomment the `route` and `service` resources that were generated and move the `route` before the `deploymentConfig` resource so we can store and use it. Your provision role should now look like this:
 
 ```yaml
 - name: create rocketchat route
